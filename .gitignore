@@ -32,3 +32,7 @@
 *.out
 *.app
 
+.idea/
+CMakeFiles/
+cmake-build-debug/
+Makefile
