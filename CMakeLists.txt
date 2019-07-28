@@ -1,3 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (sample)
-add_executable(sample test/VolumeCapture.cpp)
+find_package(CURL REQUIRED)
+add_executable(sample test/http.cpp)
+include_directories(${CURL_INCLUDE_DIR})
+target_link_libraries(sample ${CURL_LIBRARIES})
