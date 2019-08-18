@@ -267,22 +267,99 @@ public:
     }
 };
 
+
+
 template <class V>
-void measureKV(KV<V>& v) {
+void measureKV(KV<V>& v, string name) {
     int i;
     auto f = [&v, &i] (){
         int j = 0;
         for(; j < pow(2, i); j++) {
             v.put(j%10, j);
         }
-        cout << "Wrote to " << j << endl;
         return 2;
     };
 
     for(i = 10; i < 22; i++) {
-        time_it<int>("KV write[0]", f);
+        stringstream s;
+        s << name << ": " << pow(2, i);
+        time_it<int>(s.str(), f);
     }
 }
+
+int randInt(int l, int u) {
+    return (int)(rand() * (u - l)) + l;
+}
+
+void measureMap() {
+    /*
+     * write only
+     * write followed by a number of reads
+     * even number of writes and reads
+     * 10% writes
+     * 10% reads
+     */
+    int size = 1024;
+    map<int, int> data;
+    int readFraction = 50;
+
+    ofstream dataFile("mapBenchmarks.csv", ios::app|ios::out);
+    if(!(dataFile.is_open())) {
+        throw "bad";
+    }
+
+    function<int()> writeOnly = [&data, &size]() {
+        for(int i = 0; i < size; i++) {
+            data[i] = i * i;
+        }
+        return 1;
+    };
+    function<int()> readOnly = [&data, &size]() {
+        int sum = 0;
+        for(int i = 0; i < size; i++) {
+            sum += data[i];
+        }
+        return sum;
+    };
+    function<int()> readWrites = [&data, &size, &readFraction]() {
+        int sum = 0;
+        for(int i = 0; i < size; i++) {
+            int read = randInt(0, 100);
+            int ix = randInt(0, size);
+            if(read < readFraction) {
+                sum += data[ix];
+            } else {
+                data[ix] = sum;
+            }
+        }
+        return sum;
+    };
+    /*
+     * write only
+     * write followed by a number of reads
+     * even number of writes and reads
+     * 10% writes
+     * 10% reads
+     */
+    for(; size < pow(2, 20); size *= 2) {
+
+        pair<int, int> resWriteOnly = time_it("WriteOnly" + to_string(size), writeOnly);
+        dataFile << "WriteOnly," << size << "," << resWriteOnly.first << endl;
+        pair<int, int> resReadOnly = time_it("ReadOnly" + to_string(size), readOnly);
+        dataFile << "ReadOnly," << size << "," << resReadOnly.first << endl;
+        readFraction = 50;
+        pair<int, int> resEvenReadsWrites = time_it("EvenReadsWrites" + to_string(size), readWrites);
+        dataFile << "EvenReadsWrites," << size << "," << resEvenReadsWrites.first << endl;
+        readFraction = 10;
+        pair<int, int> res10pctReads = time_it("10pctReads" + to_string(size), readWrites);
+        dataFile << "10pctReads," << size << "," << res10pctReads.first << endl;
+        readFraction = 90;
+        pair<int, int> res10pctWrites = time_it("10pctWrites" + to_string(size), readWrites);
+        dataFile << "10pctWrites," << size << "," << res10pctWrites.first << endl;
+    }
+}
+
+
 
 void testPersistentKV() {
     PersistentKV<int> v(10);
@@ -317,23 +394,20 @@ int testPersistence() {
     cout << l << endl;
 }
 
+//
+//int main() {
+//    PersistentKV<int> kv(10);
+//    measureKV(kv, "PersistentKV");
+//}
+
+int measureKVEntryPoint() {
+    FastKV<int> kv(10);
+    measureKV(kv, "FastKV");
+    cout << "#####" << endl;
+    PersistentKV<int> kv2(10);
+    measureKV(kv2, "PersistentKV");
+}
 
 int main() {
-//    measureKV(kv);
-//
-//    {
-//        PersistentKV<int> kv(10);
-//        kv.put(1, 1);
-//        kv.put(2, 10);
-//        kv.put(3, 100);
-//        kv.put(4, 1000);
-//        kv.close();
-//    }
-
-    PersistentKV<int> kv(10);
-    int r = 1;
-    kv.get(4, r);
-    cout << r << endl;
-//    kv.close();
-//    testPersistence();
+    measureMap();
 }
