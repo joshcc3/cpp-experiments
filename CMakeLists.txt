@@ -4,3 +4,7 @@ find_package(CURL REQUIRED)
 add_executable(sample src/kv/FastKeyValue.cpp)
 include_directories(${CURL_INCLUDE_DIR})
 target_link_libraries(sample ${CURL_LIBRARIES})
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(sample Threads::Threads)

@@ -18,6 +18,7 @@
 #include <map>
 #include <list>
 #include <assert.h>
+#include <atomic>
 
 using namespace std;
 
@@ -358,8 +359,106 @@ void measureMap() {
         dataFile << "10pctWrites," << size << "," << res10pctWrites.first << endl;
     }
 }
+enum State {
+  DONE,
+  START,
+  STOPPED
+};
 
+void writeOnlyOuterFunc(int size, map<int, int> data) {
+    for (int i = 0; i < size; i++) {
+        data[i] = i * i;
+    }
+};
+void pooledWriteOnlyOuterFunc(State* state, atomic<int>* counter, const int* size, map<int, int> data) {
+    while(*state != DONE) {
+        while(*state != START && *state != DONE) {
+            this_thread::yield();
+        }
+        if(*state == START) {
+            cout << "Thread st" << endl;
+            int sum = 0;
+            for (int i = 0; i < *size; i++) {
+                data[i] = i * i;
+                sum += i;
+            }
+            cout << "Thread end" << endl;
+            *state = STOPPED;
+            (*counter)++;
+        }
+    }
+    cout << "Thread complete" << endl;
+};
 
+int testConcurrentWrites() { 
+    int size = 1024;
+    map<int, int> data;
+    int readFraction = 50;
+    int sum = 0;
+    for(int i = 0; i < size; i++) {
+        data[i] = 1;
+    }
+
+    function<int()> writeOnly = [&]() {
+        for(int i = 0; i < size; i++) {
+            data[i] = i * i;
+        }
+        return 1;
+    };
+    int a = 1;
+
+    function<int()> parallelWriteOnlyNoThreadPool = [&]() {
+        thread t1(writeOnlyOuterFunc, size, data);
+        thread t2 = thread(writeOnlyOuterFunc, size, data);
+        thread t3 = thread(writeOnlyOuterFunc, size, data);
+        thread t4 = thread(writeOnlyOuterFunc, size, data);
+        thread t5 = thread(writeOnlyOuterFunc, size, data);
+        t1.join();
+        t2.join();
+        t3.join();
+        t4.join();
+        t5.join();
+        return 1;
+    };
+
+    int POOL_SIZE = 8;
+    thread pool[POOL_SIZE];
+    State state[POOL_SIZE];
+    atomic<int> counter(0);
+    for(int i = 0; i < POOL_SIZE; i++) {
+        state[i] = STOPPED;
+        pool[i] = thread(pooledWriteOnlyOuterFunc, state + i, &counter, &size, data);
+    }
+
+    function<int()> parallelWriteOnlyThreadPool = [&] {
+        counter = 0;
+        cout << "Starting threads" << endl;
+        for(int i = 0; i < POOL_SIZE; i++) {
+            state[i] = START;
+        }
+        cout << "Started threads" << endl;
+        while(counter < 3) {
+            this_thread::yield();
+        }
+        cout << "All threads completed" << endl;
+
+        return 1;
+    };
+
+    for(; size < pow(2, 22); size *= 2) {
+//        time_it("WriteOnlyParNoThreadPool" + to_string(size), parallelWriteOnlyNoThreadPool);
+        time_it("WriteOnlyParWithThreadPool" + to_string(size), parallelWriteOnlyThreadPool);
+//        time_it("WriteOnly" + to_string(size), writeOnly);
+    }
+    cout << "Shutting down the thread pool" << endl;
+    for(int i = 0; i < POOL_SIZE; i++) {
+        state[i] = DONE;
+        pool[i].join();
+    }
+
+    // What happens if you pass a value by reference to a thread and then the caller exits, and the reference value was on the stack?
+    // What happens if you pass a dereference to a function as pass by reference but then free the original memory?
+}
 
 void testPersistentKV() {
     PersistentKV<int> v(10);
@@ -409,5 +508,27 @@ int measureKVEntryPoint() {
 }
 
 int main() {
-    measureMap();
+//    measureMap();
+    testConcurrentWrites();
+}
+void simpleConcurrentTest() {
+int size = 1024;
+auto f = [&] {
+    int sum = 0;
+    for(int i = 0; i < size; i++) {
+        i < sum;
+    }
+};
+
+function<int()> f2 = [&] {
+    thread t1(f);
+    thread t2(f);
+    t1.join();
+    t2.join();
+    return 1;
+};
+for(int i = 0; i < 10; i++) {
+    time_it("Test", f2);
+    size *= 3;
+}
 }
