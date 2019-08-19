@@ -15,6 +15,12 @@
  - Also can be seen in the notebook where 10pct of reads vs. 10pct of writes show a 2.5ms delay for input size > 500k
  - Using a thread pool is significantly faster - shaves of 10ms of thread init time, thread creation and deletion is expensive, (using pthreads), I implemented a very simple thread pool with a barrier implemented as an atomic counter and a state var that gates the thread task
 
+# Data Serialization
+ - Testing serializations of data strucutres:
+  - DFS serialization with dictionary encoding of values. For a traditional binary tree, you encode the structure. The value at
+    a node is the offset into the data array if the value is not 0 which otherwise denotes a null pointer.
+     
+
 
 # Useful data analysis note
  - pivot is useful when you have a table of observations and you want to convert a columns of observations

@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (sample)
-find_package(CURL REQUIRED)
-add_executable(sample src/kv/FastKeyValue.cpp)
-include_directories(${CURL_INCLUDE_DIR})
+#find_package(CURL REQUIRED)
+#add_executable(sample src/kv/FastKeyValue.cpp)
+add_executable(sample test/DatastructureSerialize.cpp)
+#include_directories(${CURL_INCLUDE_DIR})
 target_link_libraries(sample ${CURL_LIBRARIES})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)

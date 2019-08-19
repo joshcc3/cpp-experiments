@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <vector>
 #include <cmath>
+#include <assert.h>
 
 using namespace std;
 
@@ -101,62 +102,83 @@ public:
 
 };
 
-int find(int val, vector<int>& v, int s, int e) {
-    if(s == e) {
-        return -1;
-    } else if(e - s == 1) {
-        if(v[s] > v) {
-            return -1;
-        } else {
-            return s;
-        }
-    } else if(val > v[s] && val < v[e]) {
-        int mid = (s + e)/2;
-        if(val > v[mid]) {
+void mostProfit(vector<int>& v, vector<int>& returnVal) {
+    int s = v[0];
+    int l = v[0];
+    int result = l - s;
 
-        } else if(val < v[mid]) {
-
-        } else {
-            return mid;
+    for(auto it = v.begin(); it != v.end(); it++) {
+        int v = *it;
+        if(v < s) {
+            s = v;
+            l = v;
+        } else if(v > l) {
+            l = v;
         }
-    } else if(val == v[s]) {
-        return s;
-    } else if(val < v[s]) {
-        return -1;
+        result = max(result, l - s);
+        returnVal.push_back(result);
     }
 }
 
-int nthElem(vector<int>& n1, int s1, int e1, vector<int>& n2, int s2, int e2, int e) {
-    if(e == 0) {
-        return n1[0] < n2[0] ? n1[0] : n2[0];
-    } else {
-
-        int m1 = (e1 + s1)/2;
-        int m2 = find(n1[m1], n2, s2, e2);
-        if(m1 + m2 < e) {
-            return nthElem(n1, m1 + 1, e1, n2, m2 + 1, e2, e);
-        } else if(m1 + m2 == e) {
-            return n1[m1] > n2[m2] ? n[m1] : n2[m2];
-        } else {
-            return nthElem(n1, s1, m1, n2, s2, m2, e);
+void mostProfitReverse(vector<int> &v, vector<int>& returnVal) {
+    int s = v[v.size() - 1];
+    int l = s;
+    int result = l - s;
+    for(auto it = v.rbegin(); it != v.rend(); it++) {
+        int v = *it;
+        if(v > l) {
+            s = v;
+            l = v;
+        } else if(v < s) {
+            s = v;
         }
+        result = max(result, l - s);
+        returnVal.push_back(result);
     }
-
+    reverse(returnVal.begin(), returnVal.end());
 }
 
-double findMedianSortedArrays(vector<int>& nums1, vector<int>& nums2) {
-        int n1 = nums1.size();
-        int n2 = nums2.size();
+int mostProfit1Trade(vector<int> &v) {
 
-        if((n1 + n2) % 2 == 0) {
-            return ((float)(nthElem(nums1, num2, (n1 + n2)/2)) +  (float)(nthElem(nums1, num2, (n1 + n2)/2)))/2.0;
-        } else {
-            return nthElem(nums1, num2, 0, n1, 0, n2, (n1 + n2)/2.0);
-        }
+    vector<int> prefixes;
+    mostProfit(v, prefixes);
+    return prefixes[v.size() - 1];
 }
 
+int mostProfit2Trades(vector<int> &v) {
 
-
+    vector<int> prefixes;
+    vector<int> suffixes;
+    mostProfit(v, prefixes);
+    mostProfitReverse(v, suffixes);
+    int result = suffixes[0];
+    for(int i = 0; i < v.size() - 1; i++) {
+        result = max(result, prefixes[i] + suffixes[i+1]);
+    }
+    return result;
+}
 
 int main() {
+    vector<int> v;
+    v.push_back(4);
+    v.push_back(1);
+    v.push_back(2);
+    v.push_back(3);
+    v.push_back(8);
+    v.push_back(7);
+    v.push_back(7);
+    v.push_back(8);
+    v.push_back(7);
+    v.push_back(9);
+    cout << mostProfit2Trades(v) << endl;
+    cout << mostProfit1Trade(v) << endl;
+}
+
+int testSingleTradeProfit() {
+    vector<int> v;
+    for(int i = 0; i < 10; i++) {
+        v.push_back(i);
+    }
+//    cout << mostProfit(v) << endl;
+//    assert(mostProfit(v) == 9);
 }
