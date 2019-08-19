@@ -1,4 +1,3 @@
-# jjvm\n\nAn implementation of the jvm in C++ as a learning exercise
 
 
 # Notes on Key Value store
@@ -14,9 +13,9 @@
  - reads have a significantly smaller constant factor (~1.5) than writes - probably due to the number of cycles it takes to service a store in aggregate as opposed to a read.
    I don't think writes go through the cache on ever write, otherwise surely the factor would be much larger
  - Also can be seen in the notebook where 10pct of reads vs. 10pct of writes show a 2.5ms delay for input size > 500k
+ - Using a thread pool is significantly faster - shaves of 10ms of thread init time, thread creation and deletion is expensive, (using pthreads), I implemented a very simple thread pool with a barrier implemented as an atomic counter and a state var that gates the thread task
 
 
 # Useful data analysis note
- - pivot is useful when you have a table of observations and you want to convert a column of observations
-   into a columns of your table.
+ - pivot is useful when you have a table of observations and you want to convert a columns of observations
 
