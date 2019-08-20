@@ -92,44 +92,37 @@ int read_varint(const unsigned char* rep) {
 
 int varint(unsigned char *rep, int _v) {
   uint v = (uint)_v;
-  int size = 1;
-  if(v < 128) {
-    size = 1;
-  }
-  else if(v < (1 << 14)) {
-    size = 2;
-  } else if(v < (1 << 21)) {
-    size = 3;
-  } else if(v < (1 << 28)) {
-    size = 4;
-  } else if(v >= (1 << 28)) {
-    size = 5;
-  }
-
   unsigned char msb = 1 << 7;
   unsigned char* vc = (unsigned char*)(&v);
-  if(size == 1) {
+  if(v < 128) {
     rep[0] = msb | vc[0];
+    return 1;
+  }
+  else if(v < (1 << 14)) {
+    rep[0] = vc[0] >> 1;
+    rep[1] = msb | ((vc[0] & 1) << 6) | vc[1];
+    return 2;
+  }
+  else if(v < (1 << 21)) {
+    rep[0] = vc[0] >> 1;
+    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
+    rep[2] = msb | ((vc[1] & 3) << 5) | vc[2];
+    return 3;
+  }
+  else if(v < (1 << 28)) {
+    rep[0] = vc[0] >> 1;
+    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
+    rep[2] = ((vc[1] & 3) << 5) | (vc[2] >> 3);
+    rep[3] = msb | ((vc[2] & 7) << 4) | vc[3];
+    return 4;
   } else {
     rep[0] = vc[0] >> 1;
-    if(size == 2) {
-      rep[1] = msb | ((vc[0] & 1) << 6) | vc[1];
-    } else {
-      rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);
-      if(size == 3) {
-	rep[2] = msb | ((vc[1] & 3) << 5) | vc[2];
-      } else {
-	rep[2] = ((vc[1] & 3) << 5) | (vc[2] >> 3);
-	if(size == 4) {
-	  rep[3] = msb | ((vc[2] & 7) << 4) | vc[3];
-	} else {
-	  rep[3] = ((vc[2] & 7) << 4) | (vc[3] >> 4);
-	  rep[4] = msb | ((vc[3] & 15) << 3);
-	}
-      }
-    }
+    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
+    rep[2] = ((vc[1] & 3) << 5) | (vc[2] >> 3);
+    rep[3] = ((vc[2] & 7) << 4) | (vc[3] >> 4);
+    rep[4] = msb | ((vc[3] & 15) << 3);
+    return 5;
   }
-  return size;
 }
 
 struct VarInt {
@@ -180,6 +173,11 @@ int test_read_varint() {
 }
 
 int main() {
+  test_varint();
+  test_read_varint();
+}
+
+int performance_test_varint() {
   // test_varint();
   // test_read_varint();
   unsigned char dat[5];
