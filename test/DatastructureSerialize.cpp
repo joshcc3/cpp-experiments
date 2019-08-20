@@ -89,10 +89,11 @@ int read_varint(const unsigned char* rep) {
   return result;
 }
 
+unsigned char msb = 1 << 7;
 
 int varint(unsigned char *rep, int _v) {
   uint v = (uint)_v;
-  unsigned char msb = 1 << 7;
+  //unsigned long long *result = (unsigned long long*)(rep);
   unsigned char* vc = (unsigned char*)(&v);
   if(v < 128) {
     rep[0] = msb | vc[0];
@@ -172,10 +173,6 @@ int test_read_varint() {
   }
 }
 
-int main() {
-  test_varint();
-  test_read_varint();
-}
 
 int performance_test_varint() {
   // test_varint();
@@ -184,7 +181,7 @@ int performance_test_varint() {
   int size;
   function<int()> f = [&] {
     for(int i = 0; i < size; i++) {
-      varint(dat, i);
+      varint(dat, i%127);
     }
     return 0;
   };
@@ -193,6 +190,13 @@ int performance_test_varint() {
     size = pow(2, i);
     time_it("Serialize " + to_string(size) + " ints: ", f);
   }
+}
+
+
+int main() {
+  //test_varint();
+  // test_read_varint();
+  performance_test_varint();
 }
 
 

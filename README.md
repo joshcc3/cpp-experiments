@@ -18,9 +18,15 @@ All experiments on a machine with 2 cores no hyper threading and 16GB of RAM run
 # Data Serialization Tests
  - Varints:
    - These are implemented protobuf style with a leading bit indicating the end of the varint and the rest of the bits concatenated represeting the contents.
-   - Initial implementation of serializing varints - 1024 ints take 0.012ms, and 1million ints taking 16ms, 5 billion ints/20GB takes 10 seconds.
+   - Initial implementation of serializing varints
+     - Serializing numbers from 1 - size - 1024 ints take 0.012ms, and 1million ints taking 16ms, 5 billion ints/20GB takes 10 seconds. Network bandwidth is 128MBps, which would take about 3 minutes to stream so this wouldn't necessarily be a bottleneck
+     - Serializing numbers 0 - 127 (those that can fit in 1 byte of a varint) 1024, 9us and 1million 9ms and 5 billion 5s (twice the speed)
+     - 
+   
+   
    - Optimization Approaches:
      - Interestingly collapsing the calculation of size and updating the values had no real effect. Neither does making the if conditions seperate.
+
      
    
    
