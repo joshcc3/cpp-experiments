@@ -1,4 +1,6 @@
 FROM ubuntu
+ENV http_proxy http://webproxy.intra.gsacapital.com:3128
+ENV https_proxy http://webproxy.intra.gsacapital.com:3128
 RUN apt-get update && apt-get install -y gdb make gcc
 RUN apt-get install -y cmake
 RUN apt-get install -y g++ vim libcurl4-gnutls-dev
