@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.9)
 project (sample)
 #find_package(CURL REQUIRED)
 #add_executable(sample src/kv/FastKeyValue.cpp)
-add_executable(sample test/DatastructureSerialize.cpp)
+add_executable(sample src/data/DatastructureSerialize.cpp)
 #include_directories(${CURL_INCLUDE_DIR})
 target_link_libraries(sample ${CURL_LIBRARIES})
 
