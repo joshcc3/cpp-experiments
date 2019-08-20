@@ -25,12 +25,12 @@ All experiments on a machine with 2 cores no hyper threading and 16GB of RAM run
  - A completely in memory int based key value store: Takes approx 200us to set and update 1000 values in an int back hash map (just 10 elements), 200ms for 2million.
    Throughput of 10 million ops per second and a latency of 100ns per op.
    One cycle takes 0.3ns which means 300 cycles to actually write a value straight through to memory.
- - Writing to disk on every write - 20 times slower, takes ~4ms to write a thousand updates. (just 10 elements), 4s for 2 million.
+ - A very simple persistent key value store which seeks to some position in the files and writes to disk on every put - 20 times slower, takes ~4ms to write a thousand updates. (just 10 elements), 4s for 2 million.
    Gives a throughput of 500k ops per second but a latency of 2us per op..
+ - I should try memory mapping, how does the buffer cache affect things?
 
 # Reads and writes to c++ map (red black tree):
- - limits: you can make 1 million writes per second to a c++ map (rb tree) (that's 1/10th the speed of writing straight to memory)
-         3million reads per second.
+ - limits: you can make 1 million writes per second to a c++ map (rb tree) (that's 1/10th the speed of writing straight to memory), 3million reads per second.
  - reads have a significantly smaller constant factor (~1.5) than writes - probably due to the number of cycles it takes to service a store in aggregate as opposed to a read.
    I don't think writes go through the cache on ever write, otherwise surely the factor would be much larger
  - Also can be seen in the notebook where 10pct of reads vs. 10pct of writes show a 2.5ms delay for input size > 500k
