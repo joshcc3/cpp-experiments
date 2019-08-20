@@ -105,7 +105,7 @@ int varint(unsigned char *rep, int _v) {
     return 1;
   }
   else if(v < (1 << 14)) {
-    *result = (vc[0] >> 1) | ((uint)(msb | ((vc[0] & 1) << 6) | vc[1]) << 8);
+    *result = (vc[0] >> 1) | ((uint)msb << 8) | ((uint)(vc[0] & 1) << 14) | ((uint)vc[1] << 8);
     return 2;
   }
   else if(v < (1 << 21)) {
@@ -116,7 +116,7 @@ int varint(unsigned char *rep, int _v) {
     *result = (vc[0] >> 1) | ((uint)(((vc[0] & 1) << 6) | (vc[1] >> 2)) << 8) | ((uint)(((vc[1] & 3) << 5) | (vc[2] >> 3)) << 16) | ((uint)(msb | ((vc[2] & 7) << 4) | vc[3]) << 24);
     return 4;
   } else {
-    *result = (vc[0] >> 1) | ((unsigned long long)(((vc[0] & 1) << 6 | (vc[1] >> 2))) << 8) | ((unsigned long long)(((vc[1] & 3) << 5) | (vc[2] >> 3)) << 16) | ((unsigned long long)(((vc[2] & 7) << 4) | (vc[3] >> 4)) << 24) | ((unsigned long long)(msb | ((vc[3] & 15) << 3)) << 32);
+    *result = (vc[0] >> 1) | ((unsigned long long)((vc[0] & 1) << 14)) | ((unsigned long long)vc[1] << 6) | ((unsigned long long)(vc[1] & 3) << 21) | ((unsigned long long)vc[2] << 13) | ((unsigned long long)(vc[2] & 7) << 28) | ((unsigned long long)(vc[3]) << 20) | ((unsigned long long)msb << 35)  | ((unsigned long long)(vc[3] & 15) << 35);
     return 5;
   }
 }
@@ -177,7 +177,7 @@ int performance_test_varint() {
   function<int(unsigned char*, int)> testFun = varint;
   function<int()> f = [&] {
     for(int i = 0; i < size; i++) {
-      testFun(dat, i%127);
+      testFun(dat, 1<<31);
     }
     return 0;
   };
@@ -191,7 +191,7 @@ int performance_test_varint() {
 
 int main() {
   //test_varint();
-  // test_read_varint();
+  //test_read_varint();
   performance_test_varint();
 }
 
