@@ -1,3 +1,5 @@
+# What is this?
+Collection of experiments on c++ features, performance, data-structures, networks.
 All experiments on a machine with 2 cores no hyper threading and 16GB of RAM running within a container.
 
 # Data Serialization Tests
