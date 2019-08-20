@@ -91,41 +91,35 @@ int read_varint(const unsigned char* rep) {
 
 unsigned char msb = 1 << 7;
 
+int trivial_encode(unsigned char *rep, int _v) {
+  *((int*)rep) = _v;
+  return 4;
+}
+
 int varint(unsigned char *rep, int _v) {
   uint v = (uint)_v;
-  //unsigned long long *result = (unsigned long long*)(rep);
+  unsigned long long *result = (unsigned long long*)(rep);
   unsigned char* vc = (unsigned char*)(&v);
   if(v < 128) {
-    rep[0] = msb | vc[0];
+    *result = msb | vc[0];
     return 1;
   }
   else if(v < (1 << 14)) {
-    rep[0] = vc[0] >> 1;
-    rep[1] = msb | ((vc[0] & 1) << 6) | vc[1];
+    *result = (vc[0] >> 1) | ((uint)(msb | ((vc[0] & 1) << 6) | vc[1]) << 8);
     return 2;
   }
   else if(v < (1 << 21)) {
-    rep[0] = vc[0] >> 1;
-    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
-    rep[2] = msb | ((vc[1] & 3) << 5) | vc[2];
+    *result = (vc[0] >> 1) | ((uint)(((vc[0] & 1) << 6) | (vc[1] >> 2)) << 8) | ((uint)(msb | ((vc[1] & 3) << 5) | vc[2]) << 16);
     return 3;
   }
   else if(v < (1 << 28)) {
-    rep[0] = vc[0] >> 1;
-    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
-    rep[2] = ((vc[1] & 3) << 5) | (vc[2] >> 3);
-    rep[3] = msb | ((vc[2] & 7) << 4) | vc[3];
+    *result = (vc[0] >> 1) | ((uint)(((vc[0] & 1) << 6) | (vc[1] >> 2)) << 8) | ((uint)(((vc[1] & 3) << 5) | (vc[2] >> 3)) << 16) | ((uint)(msb | ((vc[2] & 7) << 4) | vc[3]) << 24);
     return 4;
   } else {
-    rep[0] = vc[0] >> 1;
-    rep[1] = ((vc[0] & 1) << 6) | (vc[1] >> 2);      
-    rep[2] = ((vc[1] & 3) << 5) | (vc[2] >> 3);
-    rep[3] = ((vc[2] & 7) << 4) | (vc[3] >> 4);
-    rep[4] = msb | ((vc[3] & 15) << 3);
+    *result = (vc[0] >> 1) | ((unsigned long long)(((vc[0] & 1) << 6 | (vc[1] >> 2))) << 8) | ((unsigned long long)(((vc[1] & 3) << 5) | (vc[2] >> 3)) << 16) | ((unsigned long long)(((vc[2] & 7) << 4) | (vc[3] >> 4)) << 24) | ((unsigned long long)(msb | ((vc[3] & 15) << 3)) << 32);
     return 5;
   }
 }
-
 struct VarInt {
   unsigned char* data;
   int size;
@@ -179,9 +173,11 @@ int performance_test_varint() {
   // test_read_varint();
   unsigned char dat[5];
   int size;
+  //function<int(unsigned char*, int)> testFun = trivial_encode;
+  function<int(unsigned char*, int)> testFun = varint;
   function<int()> f = [&] {
     for(int i = 0; i < size; i++) {
-      varint(dat, i%127);
+      testFun(dat, i%127);
     }
     return 0;
   };
