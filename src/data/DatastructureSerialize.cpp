@@ -197,6 +197,36 @@ int main() {
 
 
 
+class StringCodec {
+
+  int _writeHelper(const TreeNode *input, char* result) {
+    
+    memcpy(*result, &(input->val), 4);
+    *(result + 4) = "{";
+    int rsize = _writeHelper(input, result + 5);
+    *(result + 5 + rsize) = "}";
+    *(result + 6 + rsize) = "{";
+    int lsize = _writeHelper(input, result + 7 + rsize);
+    *(result + 7 + rsize + lsize) = "}";
+    return 8 + rsize  + lsize;
+  }
+
+public: 
+  void write(const TreeNode *input, char** result) {
+    int size = estimateSize(input);
+    *result = new char[size];
+    _writeHelper(input, *result);
+  }
+  void read(char* input, TreeNode* result)=0;
+};
+
+class StringCodec: virtual BinTreeCodec {
+public:
+  StringCodec() {}
+  BinTree
+};
+
+
 class Codec {
 public:
     void write(stringstream& result, const int v, map<int, int>& mp, int& ix, int& size) {

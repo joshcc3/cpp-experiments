@@ -2,7 +2,8 @@
 Collection of experiments on c++ features, performance, data-analysis on some finance stuff, data-structures, networks.
 All experiments on a machine with 2 cores no hyper threading and 16GB of RAM running within a container.
 
-# Data Serialization Tests
+# Data Serialization Tests   
+ (Present in src/data)
  - Serializing integers
    - Simply write out 4 bytes:
      - The values of the integers don't matter, serializing 1024, 1million and 5billion numbers takes 40us, 34ms and 18ms
@@ -24,6 +25,7 @@ All experiments on a machine with 2 cores no hyper threading and 16GB of RAM run
 
 
 # Notes on Key Value store implementations:
+ (Present in src/kv)
  - A completely in memory int based key value store: Takes approx 200us to set and update 1000 values in an int back hash map (just 10 elements), 200ms for 2million.
    Throughput of 10 million ops per second and a latency of 100ns per op.
    One cycle takes 0.3ns which means 300 cycles to actually write a value straight through to memory.
@@ -39,7 +41,82 @@ All experiments on a machine with 2 cores no hyper threading and 16GB of RAM run
  - Using a thread pool is significantly faster - shaves of 10ms of thread init time, thread creation and deletion is expensive, (using pthreads), I implemented a very simple thread pool with a barrier implemented as an atomic counter and a state var that gates the thread task
 
 
+# Weird things
+I've observed segfaults around lambdas that capture vars by reference and run in threads.
+
+# C++ things
+ - All non virtual functions are bound at compile time
+ - All classes maintain place in them to reference a whole instance of classes they inherit from unless they inherit a virtual base (not sure how these things interact though).
+ - Constructor rules
+```c++
+#include <vector>
+#include <iostream>
+#include <thread>
+#include <utility>
+#include <chrono>
+
+
+using namespace std;
+
+
+class X {
+public:
+  int v;
+  X(): v(123) {
+    cout << "Default constructor has been called" << endl;
+  }
+
+  X(const X& x) {
+    cout << "Copy constructor has been called" << endl;
+    v = x.v;
+  }
+
+  X(X&& val) {
+    cout << "The move constructor has been called" << endl;
+    v = val.v;
+  }
+
+
+  ~X() {
+    cout << "Destructor has been called" << endl;
+    v = 321;
+  }
+};
+
+X genX() {
+  return X();
+}
+
+int main() {
+  cout << "Main: Default constructor call" << endl;
+  X x;
+
+  cout << "Main: Copy constructor should be called" << endl;
+  X y = x;
+  cout << "Main: Copy constructor should be called" << endl;
+  X z(x);
+  cout << "Main: Destructor should be called" << endl;
+  x.~X();
+  cout << "Main: 1 Move constructor should be called" << endl;
+  X m = move(y);
+
+  cout << "Main: 2 Move constructor should be called" << endl;
+  X n = move(genX());
+
+
+  X o[3];
+  cout << "Main: 3 Copy constructor was called here." << endl;
+  X p(*(o + 2));                                                                                                                                                                                                                              
+
+
+
+  cout << x.v << endl;
+}
+
+```
+
 # Http 
+ Present in src/
  - Implementation of much simpler interface to get http requests based on python requests module. Currently it just uses curl_easy but it should eventually use the curl multi to initialize and handle multiple curl requests against a handle.    
 # Network experiments
  - The limit is 150MBps (established by reading into and discarding a buffer immediately).
